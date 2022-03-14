@@ -1,0 +1,45 @@
+import pandas as pd
+import os
+import glob
+
+configfile: "config/config.yaml"
+query_file = config["query_file"]
+sample_path = config["sample_path"]
+outdir = config["outdir"]
+metadata = "%smetadata.tsv" %outdir
+
+query_path = os.path.dirname(query_file)
+query_name = os.path.basename(query_file).strip(".fasta")
+
+sample_files = glob.glob(sample_path+"*[.fasta]")
+samples = [os.path.basename(fn.strip(".fasta")) for fn in sample_files]
+
+blacklist_table = pd.read_csv("config/blacklist.tsv")
+blacklist = blacklist_table.loc[:, "sample"].tolist()
+
+samples = [sample for sample in samples if sample not in blacklist]
+
+rule all:
+	input:
+		outdir+query_name+"_blast.tsv"
+
+rule init:
+	output:
+		temp("%sinit.tmp" %outdir)
+	shell:
+		"mkdir -p %s && touch {output}" %outdir
+
+rule metadata:
+	input:
+		rules.init.output
+	output:
+		metadata
+	run:
+		with open(metadata, "w") as meta_file:
+			meta_file.write("sample\n")
+			for sample in samples:
+				meta_file.write("%s\n" %sample)
+
+include: "rules/blast.smk"
+include: "rules/query_sizes.smk"
+include: "rules/merge_blast.smk"
