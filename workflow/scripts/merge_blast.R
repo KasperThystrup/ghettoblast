@@ -105,13 +105,13 @@ write_sequences <- function(query_accession, blast_fasta, blast_sequences){
 
 
 merge_metadata <- function(blast_table, metadata){
-  dplyr::right_join(blast_table, metadata, by = "sample")
+  dplyr::left_join(blast_table, metadata, by = "sample")
 }
 
 
 write_blast <- function(blast_merged, blast_results){
   message("INFO: Writing blast results table")
-  readr::write_tsv(x = blast_merged, file = stringr::str_replace(string = blast_results, pattern = "\\.xlsx", replacement = ".tsv"))
+  readr::write_tsv(x = blast_merged, file = blast_results)
 }
 
 
@@ -127,7 +127,7 @@ merge_blast <- function(blast, faidx, blast_columns, metadata_file, blast_result
   blast_table <- calculate_coverage(blast_joined)
   
   blast_fasta <- make_sequences(blast_table)
-  blast_sequences <- stringr::str_remove(string = blast_results, pattern = "blast.xlsx")
+  blast_sequences <- stringr::str_remove(string = blast_results, pattern = "blast.tsv")
   create_fasta(blast_fasta, blast_sequences)
   
   metadata <- FALSE
@@ -146,6 +146,7 @@ merge_blast <- function(blast, faidx, blast_columns, metadata_file, blast_result
 message("DEBUG: Saving image to ", fn <- file.path(getwd(), "data/merge_blast.RData"))
 save.image(file = fn)
 
+message(paste("INFO: Merging", legnth(snakemake@input[["blast"]]), "samples"))
 
 ## Execute workflow
 merge_blast(

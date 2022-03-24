@@ -33,10 +33,17 @@ rule blast:
 		expand(rules.save_blast.output.blast_out, sample = samples)
 
 """
-Clean up blast files
+Delete saved blast files
+"""
+rule delete_saved_blast:
+	input:
+		delete = rules.save_blast.output.blast_out
+	shell:
+		"rm {input}"
+
+"""
+Clear up all saved blast files
 """
 rule clear_blast:
 	input:
-		rules.save_blast.output.blast_out
-	shell:
-		"rm {input}"
+		expand(rules.delete_saved_blast.input.delete, sample = samples)
