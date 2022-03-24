@@ -146,7 +146,7 @@ merge_blast <- function(blast, faidx, blast_columns, metadata_file, blast_result
 message("DEBUG: Saving image to ", fn <- file.path(getwd(), "data/merge_blast.RData"))
 save.image(file = fn)
 
-message(paste("INFO: Merging", legnth(snakemake@input[["blast"]]), "samples"))
+message(paste("INFO: Merging", length(snakemake@input[["blast"]]), "samples"))
 
 ## Execute workflow
 merge_blast(
