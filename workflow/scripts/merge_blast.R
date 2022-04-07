@@ -118,7 +118,6 @@ write_blast <- function(blast_merged, blast_results){
 merge_blast <- function(blast, faidx, blast_columns, metadata_file, blast_results){
   
   col_names <- c(
-    "ssh s-calc-fat01-pcolumn",
     "percent_identity",
     "number_identical",
     "alignment_length",
