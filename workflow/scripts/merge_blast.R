@@ -117,7 +117,23 @@ write_blast <- function(blast_merged, blast_results){
 
 merge_blast <- function(blast, faidx, blast_columns, metadata_file, blast_results){
   
-  col_names <- read_blast_columns(column_file = blast_columns)
+  col_names <- c(
+    "ssh s-calc-fat01-pcolumn",
+    "percent_identity",
+    "number_identical",
+    "alignment_length",
+    "mismatches",
+    "gap_open",
+    "bit_score",
+    "query_acc",
+    "query_start",
+    "query_end",
+    "query_seq",
+    "subject_acc",
+    "subject_start",
+    "subject_end",
+    "subject_seq"
+  )
   
   blast_merged  <- merge_tables(blast, col_names)
   query_index <- read_faidx(fai_file = faidx)
@@ -154,7 +170,6 @@ message(paste("INFO: Merging", length(snakemake@input[["blast"]]), "samples"))
 merge_blast(
   blast = snakemake@input[["blast"]],
   faidx = snakemake@input[["faidx"]],
-  blast_columns = snakemake@params[["blast_columns"]],
   metadata_file = snakemake@params[["metadata"]],
   blast_results = snakemake@output[["blast_results"]]
 )
