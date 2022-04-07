@@ -3,7 +3,6 @@ rule merge_blast:
 		blast		= expand(rules.blast_all.output.blast, sample = samples),
 		faidx		= rules.samtools_queryindex.output.faidx
 	params:
-		blast_columns	= "config/blast_columns.tsv",
 		metadata	= metadata
 	output:
 		blast_results	= outdir+query_name+"_blast.tsv"
