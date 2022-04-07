@@ -26,7 +26,7 @@ read_blast <- function(blast_file, col_nms){
   blast_raw <- readr::read_tsv(
     file = blast_file,
     col_names = col_nms,
-    col_types = "diiiiidciicciicc"
+    col_types = "diiiidciicciicc"
   )
   
   sample <- stringr::str_remove_all(string = blast_file, pattern = "\\.blast") %>%
@@ -52,7 +52,7 @@ merge_tables <- function(blast, col_names){
   message("INFO: Reading and merging all blast files")
   blast_list <- lapply(X = blast, FUN = read_blast, col_nms = col_names)
   
-  dplyr::bind_rows(blast_list)
+  do.call(blast_list, what = rbind)
 }
 
 
