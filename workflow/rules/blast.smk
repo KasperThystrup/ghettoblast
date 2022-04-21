@@ -17,14 +17,14 @@ rule blast_all_fasta:
 
 rule blast_all_fna:
 	input:
-		fasta   = sample_path+"{sample}.fna"
+		fasta	= sample_path+"{sample}.fna"
 	params:
-		query   = config["query_file"]
+		query	= config["query_file"]
 	output:
-		blast   = temp(outdir+"{sample}.blast")
+		blast	= temp(outdir+"{sample}.blast")
 	conda:
 		"../envs/blast.yaml"
-        shell:
+	shell:
 		"blastn -query {params.query} -subject {input.fasta} -out {output.blast} -outfmt '6 pident nident length mismatch gapopen bitscore qacc qstart qend qseq sacc sstart send sseq'"
 
 
