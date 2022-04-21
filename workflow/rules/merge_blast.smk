@@ -1,6 +1,6 @@
 rule merge_blast:
 	input:
-		blast		= expand(rules.blast_all.output.blast, sample = samples),
+		blast		= expand(outdir+"{sample}.blast", sample = samples),
 		faidx		= rules.samtools_queryindex.output.faidx
 	params:
 		metadata	= metadata
