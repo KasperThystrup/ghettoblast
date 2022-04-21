@@ -33,7 +33,7 @@ Rename each blast.
 """
 rule save_blast:
 	input:
-		blast = rules.blast_all.output.blast
+		blast = outdir+"{sample}.blast"
 	output:
 		blast_out = outdir+"{sample}_blast.tsv"
 	shell:
