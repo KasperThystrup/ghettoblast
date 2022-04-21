@@ -2,7 +2,7 @@
 Query sequences are blasted against each individual sample fasta file.
 Results are saved to a custom build results table for all samplese.
 """
-rule blast_all:
+rule blast_all_fasta:
 	input:
 		fasta	= sample_path+"{sample}.fasta"
 	params:
@@ -13,6 +13,20 @@ rule blast_all:
 		"../envs/blast.yaml"
 	shell:
 		"blastn -query {params.query} -subject {input.fasta} -out {output.blast} -outfmt '6 pident nident length mismatch gapopen bitscore qacc qstart qend qseq sacc sstart send sseq'"
+
+
+rule blast_all_fna:
+	input:
+                fasta   = sample_path+"{sample}.fna"
+        params:
+                query   = config["query_file"]
+        output:
+                blast   = temp(outdir+"{sample}.blast")
+        conda:
+                "../envs/blast.yaml"
+        shell:
+                "blastn -query {params.query} -subject {input.fasta} -out {output.blast} -outfmt '6 pident nident length mismatch gapopen bitscore qacc qstart qend qseq sacc sstart send sseq'"
+
 
 """
 Rename each blast.

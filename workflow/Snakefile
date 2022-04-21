@@ -11,8 +11,13 @@ metadata = "%smetadata.tsv" %outdir
 query_path = os.path.dirname(query_file)
 query_name = os.path.basename(query_file).rstrip(".fasta")
 
-sample_files = glob.glob(pathname = "*.fasta", root_dir = sample_path)
-samples = [os.path.basename(fn.rstrip(".fasta")) for fn in sample_files]
+sample_file_fasta = glob.glob(pathname = "*.fasta", root_dir = sample_path)
+sample_file_fna = glob.glob(pathname = "*.fna", root_dir = sample_path)
+sample_files = sample_file_fasta + sample_file_fna
+
+samples_fasta = [os.path.basename(fn.rstrip(".fasta")) for fn in sample_files]
+samples_fna = [os.path.basename(fn.rstrip(".fna")) for fn in sample_files]
+samples = samples_fasta + samples_fna
 
 blacklist_table = pd.read_csv("config/blacklist.tsv")
 blacklist = blacklist_table.loc[:, "sample"].tolist()
