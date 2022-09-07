@@ -94,7 +94,7 @@ create_fasta <- function(blast_fasta, blast_sequences){
 write_sequences <- function(query_accession, blast_fasta, blast_sequences){
   fasta <- subset(blast_fasta, query_acc == query_accession) %>%
     dplyr::pull(fasta)
-  query_accession <- stringr::str_remove(string = query_accession, pattern = '[^a-zA-Z\\_]')  ### Makes query string convertable to file_names
+  query_accession <- stringr::str_remove(string = query_accession, pattern = '[^a-zA-Z\\_0-9]')  ### Makes query string convertable to file_names
   fasta_file <- paste0(blast_sequences, query_accession, ".fasta")
   
   message("INFO: Writing fasta file - ", fasta_file)
@@ -115,7 +115,7 @@ write_blast <- function(blast_merged, blast_results){
 }
 
 
-merge_blast <- function(blast, faidx, blast_columns, metadata_file, blast_results){
+merge_blast <- function(blast, faidx, blast_columns, metadata_file, exclude_seqs, blast_results){
   
   col_names <- c(
     "percent_identity",
@@ -145,15 +145,15 @@ merge_blast <- function(blast, faidx, blast_columns, metadata_file, blast_result
   blast_sequences <- stringr::str_remove(string = blast_results, pattern = "blast.tsv")
   create_fasta(blast_fasta, blast_sequences)
   
-  metadata <- FALSE
   if(file.exists(metadata_file)){
     metadata <- read_metadata(metadata_file)
     blast_table <- merge_metadata(blast_table, metadata)
   }
   
   message("INFO: Cleaning output")
-  blast_cleaned <- dplyr::select(blast_table, -c(subject_seq, query_seq))
-  write_blast(blast_cleaned, blast_results)
+  if (exclude_seqs)
+    blast_table <- dplyr::select(blast_table, -c(subject_seq, query_seq))
+  write_blast(blast_table, blast_results)
     
   message("Done")
 }
@@ -170,6 +170,7 @@ merge_blast(
   blast = snakemake@input[["blast"]],
   faidx = snakemake@input[["faidx"]],
   metadata_file = snakemake@params[["metadata"]],
+  exclude_seqs = snakemake@params[["exclude_seqs"]],
   blast_results = snakemake@output[["blast_results"]]
 )
 
