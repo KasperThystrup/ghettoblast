@@ -1,11 +1,13 @@
 import pandas as pd
 import os
 import glob
+import sys
 
 configfile: "config/config.yaml"
 query_file = config["query_file"]
 sample_path = config["sample_path"]
 outdir = config["outdir"]
+exclude_seqs = config["exclude_seqs"]
 metadata = "%smetadata.tsv" %outdir
 
 query_path = os.path.dirname(query_file)
@@ -21,11 +23,11 @@ samples = [sample for sample in samples if sample not in blacklist]
 
 rule all:
 	input:
-		outdir+query_name+"_blast.tsv"
+		"%s/%s_blast.tsv" %(outdir, query_name)
 
 rule init:
 	output:
-		temp("%sinit.tmp" %outdir)
+		temp("%s/init.tmp" %outdir)
 	shell:
 		"mkdir -p %s && touch {output}" %outdir
 
