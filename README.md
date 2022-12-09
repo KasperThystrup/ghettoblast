@@ -15,7 +15,14 @@ sample_path:
         /path/to/sample_dir/
 outdir:
         /path/to/output_dir/
+exclude_seqs:
+        FALSE
+top_only:
+        TRUE
+
 ```
+When exclude_seqs is TRUE, query and subject sequences will be extracted from the final blast matrix, and the subject sequences saved as individual fasta files.
+When top_only is TRUE, the final blast matrix only contains tophits for each subject sequences against each query sequences.
 
 The workflow automatically scans the `sample_dir` for `.fasta` files and will attempt to include these in the workflow, using their file name as **sample names** (excluding the  `.fasta` extension. 
 Example:

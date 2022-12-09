@@ -9,6 +9,11 @@ sample_path = config["sample_path"]
 outdir = config["outdir"]
 exclude_seqs = config["exclude_seqs"]
 metadata = "%smetadata.tsv" %outdir
+top_only = config["top_only"]
+
+besthit = ""
+if top_only:
+	besthit = "-subject_besthit"
 
 query_path = os.path.dirname(query_file)
 query_name = os.path.basename(query_file).rstrip(".fasta")

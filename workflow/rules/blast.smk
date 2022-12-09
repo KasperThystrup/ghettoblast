@@ -12,6 +12,6 @@ rule blast_all:
 	conda:
 		"../envs/blast.yaml"
 	message:
-		"CMD: blastn -query {params.query} -subject {input.fasta} -out {output.blast} -outfmt '6 pident nident length mismatch gapopen bitscore qacc qstart qend qseq sacc sstart send sseq'"
+		"CMD: blastn -query {params.query} -subject {input.fasta} -out {output.blast} -outfmt '6 pident nident length mismatch gapopen bitscore qacc qstart qend qseq sacc sstart send sseq' %s" %besthit
 	shell:
-		"blastn -query {params.query} -subject {input.fasta} -out {output.blast} -outfmt '6 pident nident length mismatch gapopen bitscore qacc qstart qend qseq sacc sstart send sseq'"
+		"blastn -query {params.query} -subject {input.fasta} -out {output.blast} -outfmt '6 pident nident length mismatch gapopen bitscore qacc qstart qend qseq sacc sstart send sseq' %s" %besthit
