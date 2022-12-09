@@ -7,14 +7,14 @@ This workflow have been developped with the following versions, previous version
 * conda 4.6.14
 
 ## Setup
-In order to make the pipeline work, copy the following text field, copy it into a plain text file and save it as `config/config.yaml`
+In order to make the pipeline work, fill following text field, copy it into a plain text file and save it as `config/config.yaml`
 ```
 query_file:
         /path/to/target_seqs.fasta
 sample_path:
-        /path/to/sample_dir/
+        /path/to/sample_dir
 outdir:
-        /path/to/output_dir/
+        /path/to/output_dir
 exclude_seqs:
         FALSE
 top_only:
@@ -25,21 +25,21 @@ When exclude_seqs is TRUE, query and subject sequences will be extracted from th
 When top_only is TRUE, the final blast matrix only contains tophits for each subject sequences against each query sequences.
 
 The workflow automatically scans the `sample_dir` for `.fasta` files and will attempt to include these in the workflow, using their file name as **sample names** (excluding the  `.fasta` extension. 
+
 Example:
 
 ```
-> ls sample_dir/
+> ls /path/to/sample_dir/
 S_aureus1.fasta  S_aureus2.fasta  C_freundii1.fasta
 ```
 
-Their **sample name** will be `S_aureus1` `S_aureus`, and `C_freundii1`
+Their **sample name** will be `S_aureus1` `S_aureus2`, and `C_freundii1`
 
-### sample exclusion
-If you wish to exclude specific samples within the `sample_dir/`, make a plain `config/blacklist.tsv` file, write `sample` as the header, and write one **sample name**  per file (excluding the .fasta extension).
-Example: to exclude `C_freundii1`
+### Sample exclusion
+If you wish to exclude specific samples within the `sample_dir/`, provide sample names into the `config/blacklist.tsv` file. Make sure to maintain `sample` as the header, and write one **sample name**  per line (note don't use their full file names!).
+Example: to exclude `C_freundii1` the `config/blacklist.tsv` file should look like this
 
 ```
-> cat config/blacklist.tsv
 sample
 C_freundii1
 ```

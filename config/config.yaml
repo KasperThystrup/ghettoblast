@@ -1,0 +1,5 @@
+query_file: /path/to/target_seqs.fasta
+sample_path: /path/to/sample_dir
+outdir: /path/to/output_dir
+exclude_seqs: FALSE
+top_only: TRUE
