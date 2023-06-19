@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import glob
+import re
 import sys
 
 configfile: "config/config.yaml"
@@ -19,12 +20,14 @@ query_path = os.path.dirname(query_file)
 query_name = os.path.basename(query_file).rstrip(".fasta")
 
 sample_files = glob.glob(pathname = "*.fasta", root_dir = sample_path)
-samples = [os.path.basename(fn.rstrip(".fasta")) for fn in sample_files]
+samples = [os.path.basename(re.sub("\.fasta", "", fn)) for fn in sample_files]
 
 blacklist_table = pd.read_csv("config/blacklist.tsv")
 blacklist = blacklist_table.loc[:, "sample"].tolist()
 
 samples = [sample for sample in samples if sample not in blacklist]
+
+print("Detected %s samples. Initiating pipeline" %len(samples))
 
 rule all:
 	input:
