@@ -11,6 +11,7 @@ outdir = config["outdir"]
 exclude_seqs = config["exclude_seqs"]
 metadata = "%smetadata.tsv" %outdir
 top_only = config["top_only"]
+debug = config["debug"]
 
 besthit = ""
 if top_only:

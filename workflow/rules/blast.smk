@@ -8,7 +8,7 @@ rule blast_all:
 	params:
 		query	= config["query_file"]
 	output:
-		blast	= temp("%s/{sample}.blast" %outdir)
+		blast	= temp("%s/tmp/{sample}.blast" %outdir)
 	conda:
 		"../envs/blast.yaml"
 	message:

@@ -22,17 +22,17 @@ read_metadata <- function(metadata_file){
 }
 
 
-read_blast <- function(blast_file, col_nms){
+read_blast <- function(blast_file, col_names){
   blast_raw <- readr::read_tsv(
     file = blast_file,
-    col_names = col_nms,
+    col_names = col_names,
     col_types = "diiiidciicciicc"
   )
   
   sample <- stringr::str_remove_all(string = blast_file, pattern = "\\.blast") %>%
     basename
   
-  dplyr::mutate(blast_raw, sample = sample)
+  dplyr::mutate(blast_raw, sample = sample, .before = 1)
 }
 
 
@@ -50,22 +50,21 @@ read_faidx <- function(fai_file){
 
 merge_tables <- function(blast, col_names){
   message("INFO: Reading and merging all blast files")
-  blast_list <- lapply(X = blast, FUN = read_blast, col_nms = col_names)
+  tables <- purrr::map_dfr(.x = blast, .f = read_blast, col_names = col_names)
   
-  do.call(blast_list, what = rbind)
+  dplyr::select(tables, dplyr::any_of(c("sample", col_names)))
 }
 
 
-calculate_coverage <- function(blast_joined){
+recalculate_statistics <- function(blast_joined){
   
-  message("INFO: Calculating coverage and rearranging columns")
-  blast_table <- dplyr::mutate(
+  message("INFO: Correcting identity and calculating coverage")
+  dplyr::mutate(
     blast_joined,
-    percent_query_coverage = alignment_length / query_length * 100
-  ) 
-  
-  dplyr::relocate(blast_table, sample) %>%
-    dplyr::relocate(query_length, percent_query_coverage, .after = gap_open)
+    percent_query_coverage = alignment_length / query_length * 100,
+    percent_identity = number_identical / query_length * 100,
+    .after = percent_identity
+  )
 }
 
 
@@ -95,10 +94,23 @@ write_sequences <- function(query_accession, blast_fasta, blast_sequences){
   fasta <- subset(blast_fasta, query_acc == query_accession) %>%
     dplyr::pull(fasta)
   query_accession <- stringr::str_remove(string = query_accession, pattern = '[^a-zA-Z\\_0-9]')  ### Makes query string convertable to file_names
-  fasta_file <- paste0(blast_sequences, query_accession, ".fasta")
+  fasta_string <- paste0(blast_sequences, query_accession, ".fasta")
   
-  message("INFO: Writing fasta file - ", fasta_file)
-  readr::write_lines(x = fasta, file = fasta_file, append = TRUE)
+  fasta_dir <- file.path(dirname(fasta_string), "Sequences")
+  dir.create(path = fasta_dir, recursive = TRUE, showWarnings = FALSE)
+  
+  fasta_file <- stringr::str_replace_all(
+    
+    string = stringr::str_replace_all(
+      string = basename(fasta_string), pattern = "\\W", replacement = "_"
+    ),
+    
+    pattern = "_[fast]+$", replacement = ".fasta"
+  )
+  fasta_path <- file.path(fasta_dir, fasta_file)
+
+  message("INFO: Writing fasta file - ", fasta_path)
+  readr::write_lines(x = fasta, file = fasta_path, append = TRUE)
   
   message("Done")
 }
@@ -108,6 +120,18 @@ merge_metadata <- function(blast_table, metadata){
   dplyr::left_join(blast_table, metadata, by = "sample")
 }
 
+extract_top_only <- function(blast){
+  blast_by_sample <- dplyr::group_by(blast, sample)
+  blast_filter_cov <- dplyr::filter(
+    .data = blast_by_sample,
+    percent_query_coverage == max(percent_query_coverage)
+  )
+  
+  dplyr::filter(
+    .data = blast_filter_cov,
+    percent_identity == max(percent_identity)
+  )
+}
 
 write_blast <- function(blast_merged, blast_results){
   message("INFO: Writing blast results table")
@@ -115,7 +139,7 @@ write_blast <- function(blast_merged, blast_results){
 }
 
 
-merge_blast <- function(blast, faidx, blast_columns, metadata_file, exclude_seqs, blast_results){
+merge_blast <- function(blast, faidx, blast_columns, metadata_file, exclude_seqs, top_only, blast_results){
   
   col_names <- c(
     "percent_identity",
@@ -139,11 +163,7 @@ merge_blast <- function(blast, faidx, blast_columns, metadata_file, exclude_seqs
   
   message("INFO: Joing query index")
   blast_joined <- dplyr::inner_join(x = blast_merged, y = query_index, by = "query_acc")
-  blast_table <- calculate_coverage(blast_joined)
-  
-  blast_fasta <- make_sequences(blast_table)
-  blast_sequences <- stringr::str_remove(string = blast_results, pattern = "blast.tsv")
-  create_fasta(blast_fasta, blast_sequences)
+  blast_table <- recalculate_statistics(blast_joined)
   
   if(file.exists(metadata_file)){
     metadata <- read_metadata(metadata_file)
@@ -151,26 +171,37 @@ merge_blast <- function(blast, faidx, blast_columns, metadata_file, exclude_seqs
   }
   
   message("INFO: Cleaning output")
-  if (exclude_seqs)
-    blast_table <- dplyr::select(blast_table, -c(subject_seq, query_seq))
-  write_blast(blast_table, blast_results)
-    
+  blast_clean <- blast_table
+  
+  if (exclude_seqs){
+    blast_fasta <- make_sequences(blast_table)
+    blast_sequences <- stringr::str_remove(string = blast_results, pattern = "blast.tsv")
+    blast_clean <- dplyr::select(blast_table, -c(subject_seq, query_seq))
+    create_fasta(blast_fasta, blast_sequences)
+  }
+  if (top_only)
+    blast_clean <- extract_top_only(blast = blast_clean)
+  
+  write_blast(blast_clean, blast_results)
+  
   message("Done")
 }
-
-tmp_dir <- file.path(snakemake@params[["outdir"]], "tmp")
-dir.create(tmp_dir)
-message("DEBUG: Saving image to ", tmp_file <- file.path(tmp_dir, "merge_blast.RData"))
-save.image(file = tmp_file)
+if (snakemake@params$debug | snakemake@params$exclude_seqs){
+  tmp_dir <- file.path(snakemake@params[["outdir"]], "tmp")
+  dir.create(tmp_dir, recursive = TRUE, showWarnings = FALSE)
+  message("DEBUG: Saving image to ", tmp_file <- file.path(tmp_dir, "merge_blast.RData"))
+  save.image(file = tmp_file)
+}
 
 message(paste("INFO: Merging", length(snakemake@input[["blast"]]), "samples"))
 
 ## Execute workflow
 merge_blast(
-  blast = snakemake@input[["blast"]],
-  faidx = snakemake@input[["faidx"]],
-  metadata_file = snakemake@params[["metadata"]],
-  exclude_seqs = snakemake@params[["exclude_seqs"]],
-  blast_results = snakemake@output[["blast_results"]]
+  blast = snakemake@input$blast,
+  faidx = snakemake@input$faidx,
+  metadata_file = snakemake@params$metadata,
+  exclude_seqs = snakemake@params$exclude_seqs,
+  top_only = snakemake@params$top_only,
+  blast_results = snakemake@output$blast_results
 )
 
